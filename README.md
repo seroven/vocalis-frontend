@@ -1,75 +1,85 @@
-# React + TypeScript + Vite
+# Vocalis
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend de Vocalis, un entrenador vocal. React + TypeScript + Vite.
 
-Currently, two official plugins are available:
+## Cómo arrancar
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Vite queda en `http://localhost:5173` y reenvía `/api` al backend (`http://localhost:4000`). El backend tiene que estar corriendo para que la página de health muestre datos.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Organización
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+El código se agrupa por **módulo** (una feature). El módulo dueño de su página, sus rutas, sus tipos y su conversación con la API. Las carpetas transversales solo existen cuando hay código real que poner ahí.
 
 ```
+src/
+  main.tsx              Bootstrap de React
+  App.tsx               Monta el router
+  config/               Cliente HTTP (fetch hacia /api)
+  layouts/              Shell de la app (header + <Outlet />)
+  routes/               Router y agregación de rutas de módulos
+  shared/               Contratos y helpers que usan varios módulos
+  styles/               CSS global
+  modules/
+    health/
+      HealthPage.tsx
+      routes.tsx
+      services/         Llamadas a la API
+      interfaces/       Tipos del módulo
+```
+
+| Carpeta | Para qué |
+|---|---|
+| `config/` | Cómo se llama al backend |
+| `layouts/` | Estructura visual compartida |
+| `routes/` | Crea el router y junta las rutas de cada módulo |
+| `shared/` | Cosas transversales (hoy, `ApiResponse`) |
+| `styles/` | Estilos globales |
+| `modules/` | Una carpeta por feature |
+| `modules/<nombre>/services/` | Clases que hablan con la API |
+| `modules/<nombre>/interfaces/` | Tipos de ese dominio |
+
+No hay `store/`, `enums/` ni `constants/` todavía. Esas carpetas se crean dentro del módulo (o en `shared/` si son globales) cuando hagan falta.
+
+## Cómo se conectan las piezas
+
+1. `routes/routes.tsx` monta el layout y hace spread de las rutas de cada módulo.
+2. Cada módulo exporta su `routes.tsx`.
+3. La página usa un `*Service.ts` para pedir datos.
+4. El service usa `config/api.ts` y tipa la respuesta con `ApiResponse<T>`.
+
+El backend responde siempre así:
+
+```ts
+{ status: number, detail: string, data: T }
+```
+
+## Cómo agregar un módulo
+
+1. Crea `src/modules/<nombre>/` con `*Page.tsx`, `routes.tsx` y, si habla con la API, `services/` e `interfaces/`.
+2. Exporta las rutas del módulo.
+3. Regístralas en `src/routes/routes.tsx`.
+
+Ejemplo cuando exista práctica:
+
+```
+modules/practice/
+  PracticePage.tsx
+  routes.tsx
+  services/PracticeService.ts
+  interfaces/practice.interface.ts
+```
+
+## Scripts
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run preview` | Sirve el build |
+| `npm run lint` | ESLint |
