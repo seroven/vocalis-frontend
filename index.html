@@ -1,10 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vocalis</title>
+    <script>
+      (() => {
+        try {
+          const stored = JSON.parse(localStorage.getItem('vocalis-theme') || 'null')
+          const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches
+          document.documentElement.dataset.theme = stored?.mode || (prefersLight ? 'light' : 'dark')
+          document.documentElement.style.setProperty('--hue', String(stored?.hue ?? 268))
+        } catch {
+          document.documentElement.dataset.theme = 'dark'
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

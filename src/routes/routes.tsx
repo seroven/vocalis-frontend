@@ -1,11 +1,19 @@
 import type { RouteObject } from 'react-router-dom'
 import { AppLayout } from '../layouts/AppLayout'
-import { healthRoutes } from '../modules/health/routes'
+import { ProtectedRoute } from '../modules/auth/components/ProtectedRoute'
+import { authRoutes } from '../modules/auth/routes'
+import { homeRoutes } from '../modules/home/routes'
 
 export const routes: RouteObject[] = [
   {
     path: '/',
     element: <AppLayout />,
-    children: [...healthRoutes],
+    children: [
+      ...authRoutes,
+      {
+        element: <ProtectedRoute />,
+        children: [...homeRoutes],
+      },
+    ],
   },
 ]

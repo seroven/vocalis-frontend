@@ -1,11 +1,44 @@
+import type { ApiResponse } from '../shared/interfaces/api-response.interface'
+
 const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
-export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`)
+class ApiError extends Error {
+  status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
+  const response = await fetch(`${API_URL}${path}`, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...init?.headers,
+    },
+    ...init,
+  })
+
+  const body = (await response.json()) as ApiResponse<T>
 
   if (!response.ok) {
-    throw new Error(`Error ${response.status} al consultar ${path}`)
+    throw new ApiError(response.status, body.detail || `Error ${response.status}`)
   }
 
-  return response.json() as Promise<T>
+  return body
 }
+
+export function apiGet<T>(path: string) {
+  return request<T>(path)
+}
+
+export function apiPost<T>(path: string, data?: unknown) {
+  return request<T>(path, {
+    method: 'POST',
+    body: data ? JSON.stringify(data) : undefined,
+  })
+}
+
+export { ApiError }
