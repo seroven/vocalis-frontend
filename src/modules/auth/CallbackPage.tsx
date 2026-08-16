@@ -75,7 +75,7 @@ export function CallbackPage() {
   }, [navigate, searchParams, setUser])
 
   return (
-    <section className="mx-auto w-full max-w-2xl text-center">
+    <section className="m-auto w-full max-w-2xl text-center">
       <h1 className="flex justify-center">
         <VocalisLogo animated variant="wordmark" className="h-14 w-auto md:h-16" />
       </h1>

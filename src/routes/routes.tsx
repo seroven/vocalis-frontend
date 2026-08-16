@@ -3,6 +3,7 @@ import { AppLayout } from '../layouts/AppLayout'
 import { ProtectedRoute } from '../modules/auth/components/ProtectedRoute'
 import { authRoutes } from '../modules/auth/routes'
 import { homeRoutes } from '../modules/home/routes'
+import { recordingsRoutes } from '../modules/recordings/routes'
 
 export const routes: RouteObject[] = [
   {
@@ -12,7 +13,7 @@ export const routes: RouteObject[] = [
       ...authRoutes,
       {
         element: <ProtectedRoute />,
-        children: [...homeRoutes],
+        children: [...homeRoutes, ...recordingsRoutes],
       },
     ],
   },

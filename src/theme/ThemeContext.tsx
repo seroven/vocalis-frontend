@@ -1,6 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import {
-  animateHueTo,
   applyTheme,
   persistTheme,
   readStoredTheme,
@@ -18,22 +17,11 @@ const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<StoredTheme>(() => readStoredTheme())
-  const firstHue = useRef(true)
 
-  useEffect(() => {
-    applyTheme(theme, { snapHue: false })
+  useLayoutEffect(() => {
+    applyTheme(theme)
     persistTheme(theme)
   }, [theme])
-
-  useEffect(() => {
-    if (firstHue.current) {
-      firstHue.current = false
-      applyTheme(theme)
-      return
-    }
-
-    animateHueTo(theme.hue)
-  }, [theme.hue])
 
   const value = useMemo<ThemeContextValue>(
     () => ({

@@ -5,12 +5,16 @@ export function ProtectedRoute() {
   const { user, ready } = useAuth()
 
   if (!ready) {
-    return <p className="w-full text-center text-stage-muted">Cargando sesión...</p>
+    return <p className="m-auto text-stage-muted">Cargando sesión...</p>
   }
 
   if (!user) {
     return <Navigate to="/login" replace />
   }
 
-  return <Outlet />
+  return (
+    <div className="flex min-h-full w-full flex-1 flex-col">
+      <Outlet />
+    </div>
+  )
 }

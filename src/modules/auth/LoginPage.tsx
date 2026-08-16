@@ -28,7 +28,7 @@ export function LoginPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-2xl text-center">
+    <section className="m-auto w-full max-w-2xl text-center">
       <h1 className="flex justify-center">
         <VocalisLogo animated variant="wordmark" className="h-14 w-auto text-accent md:h-16" />
       </h1>

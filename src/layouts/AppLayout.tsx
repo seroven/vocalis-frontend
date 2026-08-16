@@ -8,7 +8,7 @@ export function AppLayout() {
       <AppHeader />
       <section className="app-stage relative flex min-h-0 flex-1 overflow-hidden rounded-[2.5rem] text-stage-fg">
         <AmbientBackground />
-        <main className="relative z-10 mx-auto flex w-[min(1120px,calc(100%-2.5rem))] flex-1 items-center py-12 md:py-16">
+        <main className="relative z-10 mx-auto flex w-[min(1120px,calc(100%-2.5rem))] min-h-0 flex-1 flex-col overflow-y-auto py-12 md:py-16">
           <StageOutlet />
         </main>
       </section>

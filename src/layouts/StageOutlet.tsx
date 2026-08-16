@@ -13,7 +13,7 @@ export function StageOutlet() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
         transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-        className="flex w-full flex-1 items-center"
+        className="flex min-h-full w-full flex-1 flex-col"
       >
         {outlet}
       </motion.div>

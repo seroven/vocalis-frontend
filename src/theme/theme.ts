@@ -40,48 +40,10 @@ export function readStoredTheme(): StoredTheme {
   }
 }
 
-export function applyTheme(theme: StoredTheme, options?: { snapHue?: boolean }) {
+export function applyTheme(theme: StoredTheme) {
   const root = document.documentElement
   root.dataset.theme = theme.mode
-
-  if (options?.snapHue !== false) {
-    root.style.setProperty('--hue', String(theme.hue))
-  }
-}
-
-let hueFrame = 0
-
-export function animateHueTo(target: number, duration = 280) {
-  const root = document.documentElement
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  if (prefersReduced) {
-    root.style.setProperty('--hue', String(target))
-    return
-  }
-
-  const current = Number(root.style.getPropertyValue('--hue'))
-  const from = Number.isFinite(current) ? current : target
-  let delta = target - from
-
-  if (delta > 180) delta -= 360
-  if (delta < -180) delta += 360
-
-  cancelAnimationFrame(hueFrame)
-  const start = performance.now()
-
-  const tick = (now: number) => {
-    const progress = Math.min(1, (now - start) / duration)
-    const eased = 1 - (1 - progress) ** 3
-    const value = (from + delta * eased + 360) % 360
-    root.style.setProperty('--hue', value.toFixed(2))
-
-    if (progress < 1) {
-      hueFrame = requestAnimationFrame(tick)
-    }
-  }
-
-  hueFrame = requestAnimationFrame(tick)
+  root.style.setProperty('--hue', String(theme.hue))
 }
 
 export function persistTheme(theme: StoredTheme) {
