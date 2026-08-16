@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { ButtonLink } from '../../shared/components/Button'
 import { TextField } from '../../shared/components/TextField'
 import { useAuth } from '../auth/AuthContext'
+import { FavoritesService } from '../favorites/services/FavoritesService'
 import { CatalogGrid, SearchPulse } from './components/CatalogGrid'
 import { SearchFilters } from './components/SearchFilters'
 import type { CatalogItem, SearchFilter } from './interfaces/search.interface'
@@ -34,20 +35,31 @@ export function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const query = searchParams.get('q') ?? ''
   const filter = parseSearchFilter(searchParams.get('type'))
+  const favoritesOnly = searchParams.get('fav') === '1'
   const value = query.trim()
-  const skipDebounce = useRef(value.length >= 2)
+  const listing = favoritesOnly || value.length >= 2
+  const skipDebounce = useRef(listing)
 
   const [items, setItems] = useState<CatalogItem[]>(() => {
+    if (favoritesOnly) {
+      return []
+    }
+
     const snapshot = value.length >= 2 ? readSearchSnapshot(value, filter) : null
     return snapshot ?? []
   })
   const [resultQuery, setResultQuery] = useState(() =>
-    value.length >= 2 && readSearchSnapshot(value, filter) ? value : '',
+    !favoritesOnly && value.length >= 2 && readSearchSnapshot(value, filter) ? value : '',
   )
   const [resultFilter, setResultFilter] = useState<SearchFilter>(() =>
-    value.length >= 2 && readSearchSnapshot(value, filter) ? filter : 'all',
+    !favoritesOnly && value.length >= 2 && readSearchSnapshot(value, filter) ? filter : 'all',
   )
+  const [resultFavorites, setResultFavorites] = useState(false)
   const [status, setStatus] = useState<SearchStatus>(() => {
+    if (favoritesOnly) {
+      return 'idle'
+    }
+
     const snapshot = value.length >= 2 ? readSearchSnapshot(value, filter) : null
     if (!snapshot) {
       return 'idle'
@@ -55,8 +67,9 @@ export function HomePage() {
     return snapshot.length > 0 ? 'ready' : 'empty'
   })
 
-  const searching = value.length >= 2
-  const busy = searching && (value !== resultQuery || filter !== resultFilter)
+  const busy =
+    listing &&
+    (value !== resultQuery || filter !== resultFilter || favoritesOnly !== resultFavorites)
 
   function setQuery(nextQuery: string) {
     setSearchParams(
@@ -88,8 +101,24 @@ export function HomePage() {
     )
   }
 
-  const placeholder =
-    filter === 'track'
+  function setFavoritesOnly(next: boolean) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev)
+        if (next) {
+          params.set('fav', '1')
+        } else {
+          params.delete('fav')
+        }
+        return params
+      },
+      { replace: true },
+    )
+  }
+
+  const placeholder = favoritesOnly
+    ? 'Filtra tus favoritos'
+    : filter === 'track'
       ? 'Busca una canción'
       : filter === 'album'
         ? 'Busca un álbum'
@@ -98,35 +127,45 @@ export function HomePage() {
           : 'Busca artista, álbum o canción'
 
   useEffect(() => {
-    if (value.length < 2) {
+    if (!listing) {
       return
     }
 
-    const snapshot = readSearchSnapshot(value, filter)
+    const snapshot =
+      !favoritesOnly && value.length >= 2 ? readSearchSnapshot(value, filter) : null
     let cancelled = false
-    const delay = skipDebounce.current || snapshot ? 0 : 350
+    const delay = skipDebounce.current || snapshot || favoritesOnly ? 0 : 350
     skipDebounce.current = false
     const timer = window.setTimeout(() => {
       if (!snapshot) {
         setStatus('loading')
       }
 
-      void SpotifyService.search(value, filter)
+      const request = favoritesOnly
+        ? FavoritesService.list(filter, value)
+        : SpotifyService.search(value, filter)
+
+      void request
         .then((response) => {
           if (cancelled) {
             return
           }
 
-          writeSearchSnapshot(value, filter, response.data.items)
+          if (!favoritesOnly) {
+            writeSearchSnapshot(value, filter, response.data.items)
+          }
+
           setItems(response.data.items)
           setResultQuery(value)
           setResultFilter(filter)
+          setResultFavorites(favoritesOnly)
           setStatus(response.data.items.length > 0 ? 'ready' : 'empty')
         })
         .catch(() => {
           if (!cancelled) {
             setResultQuery(value)
             setResultFilter(filter)
+            setResultFavorites(favoritesOnly)
             if (!snapshot) {
               setStatus('error')
             }
@@ -138,13 +177,17 @@ export function HomePage() {
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [value, filter])
+  }, [favoritesOnly, filter, listing, value])
 
-  const visibleItems = searching ? items : []
+  const visibleItems = listing ? items : []
   const message =
-    !busy && searching && status === 'empty'
-      ? 'No encontramos nada con esa búsqueda.'
-      : !busy && searching && status === 'error'
+    !busy && listing && status === 'empty'
+      ? favoritesOnly
+        ? value
+          ? 'Ningún favorito coincide con eso.'
+          : 'Aún no tienes favoritos.'
+        : 'No encontramos nada con esa búsqueda.'
+      : !busy && listing && status === 'error'
         ? 'No se pudo buscar ahora. Prueba de nuevo.'
         : null
 
@@ -152,7 +195,7 @@ export function HomePage() {
     <section className="flex min-h-full w-full flex-col">
       <div
         className={`flex w-full flex-col items-center ${
-          searching ? '' : 'flex-1 justify-center'
+          listing ? '' : 'flex-1 justify-center'
         }`}
       >
         <motion.div
@@ -186,7 +229,12 @@ export function HomePage() {
               busy={busy}
               className="min-w-0 flex-1"
             />
-            <SearchFilters value={filter} onChange={setFilter} />
+            <SearchFilters
+              value={filter}
+              onChange={setFilter}
+              favoritesOnly={favoritesOnly}
+              onFavoritesOnlyChange={setFavoritesOnly}
+            />
           </div>
 
           <div className="mt-5 grid min-h-6 place-items-center">
@@ -213,7 +261,7 @@ export function HomePage() {
       <AnimatePresence mode="wait">
         {visibleItems.length > 0 ? (
           <motion.div
-            key={`${resultQuery}:${resultFilter}`}
+            key={`${resultQuery}:${resultFilter}:${resultFavorites ? 'fav' : 'all'}`}
             className="mx-auto w-full max-w-[53rem]"
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{

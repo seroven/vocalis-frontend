@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { BrandLoader } from '../../../brand/BrandLoader'
+import { FavoritesProvider } from '../../favorites/FavoritesContext'
 import { useAuth } from '../AuthContext'
 
 export function ProtectedRoute() {
@@ -14,8 +15,10 @@ export function ProtectedRoute() {
   }
 
   return (
-    <div className="flex min-h-full w-full flex-1 flex-col">
-      <Outlet />
-    </div>
+    <FavoritesProvider>
+      <div className="flex min-h-full w-full flex-1 flex-col">
+        <Outlet />
+      </div>
+    </FavoritesProvider>
   )
 }

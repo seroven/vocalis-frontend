@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Disc3, Mic2, Music2, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { FavoriteButton } from '../../favorites/components/FavoriteButton'
 import { itemPath } from '../itemPath'
 import type { CatalogItem, CatalogItemType } from '../interfaces/search.interface'
 
@@ -43,20 +44,23 @@ function CatalogCard({ item }: { item: CatalogItem }) {
       variants={cardVariants}
       className={`min-w-0 ${artist ? 'text-center' : 'text-left'}`}
     >
-      <Link to={itemPath(item)} className="block">
-        <motion.div
-          className={meta.cover}
-          whileHover={reduceMotion ? undefined : { y: -4, scale: 1.03 }}
-          transition={{ type: 'spring', stiffness: 340, damping: 20 }}
-        >
-          {item.imageUrl ? (
-            <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="grid h-full w-full place-items-center font-display text-2xl text-accent">
-              {initial}
-            </div>
-          )}
-        </motion.div>
+      <Link to={itemPath(item)} className="relative block">
+        <div className="relative">
+          <motion.div
+            className={meta.cover}
+            whileHover={reduceMotion ? undefined : { y: -4, scale: 1.03 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 20 }}
+          >
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="grid h-full w-full place-items-center font-display text-2xl text-accent">
+                {initial}
+              </div>
+            )}
+          </motion.div>
+          <FavoriteButton item={item} className="absolute top-1.5 right-1.5 z-10" />
+        </div>
 
         <div className={`catalog-tag ${artist ? 'mx-auto' : ''}`}>
           <meta.Icon size={11} strokeWidth={2.2} />

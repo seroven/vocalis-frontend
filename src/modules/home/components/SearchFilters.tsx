@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Disc3, LayoutGrid, Mic2, Music2, Search, type LucideIcon } from 'lucide-react'
+import { Disc3, LayoutGrid, Mic2, Music2, Search, Star, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../../../shared/components/Button'
 import type { SearchFilter } from '../interfaces/search.interface'
@@ -16,12 +16,19 @@ const FILTERS: Array<{ id: SearchFilter; label: string; Icon: LucideIcon }> = [
 type SearchFiltersProps = {
   value: SearchFilter
   onChange: (filter: SearchFilter) => void
+  favoritesOnly: boolean
+  onFavoritesOnlyChange: (value: boolean) => void
 }
 
-export function SearchFilters({ value, onChange }: SearchFiltersProps) {
+export function SearchFilters({
+  value,
+  onChange,
+  favoritesOnly,
+  onFavoritesOnlyChange,
+}: SearchFiltersProps) {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
-  const filtered = value !== 'all'
+  const filtered = value !== 'all' || favoritesOnly
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
@@ -53,7 +60,7 @@ export function SearchFilters({ value, onChange }: SearchFiltersProps) {
         aria-label="Filtros de búsqueda"
         aria-expanded={open}
       >
-        <Search size={18} />
+        {favoritesOnly ? <Star size={18} fill="currentColor" strokeWidth={0} /> : <Search size={18} />}
       </Button>
 
       <AnimatePresence>
@@ -63,7 +70,7 @@ export function SearchFilters({ value, onChange }: SearchFiltersProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.22, ease }}
-            className="panel absolute top-[calc(100%+10px)] right-0 z-30 w-44 rounded-2xl p-1.5"
+            className="panel absolute top-[calc(100%+10px)] right-0 z-30 w-48 rounded-2xl p-1.5"
             role="radiogroup"
             aria-label="Filtrar resultados"
           >
@@ -77,16 +84,30 @@ export function SearchFilters({ value, onChange }: SearchFiltersProps) {
                   selected={selected}
                   role="radio"
                   aria-checked={selected}
-                  onClick={() => {
-                    onChange(filter.id)
-                    setOpen(false)
-                  }}
+                  onClick={() => onChange(filter.id)}
                 >
                   <filter.Icon size={15} strokeWidth={selected ? 2.3 : 1.8} />
                   {filter.label}
                 </Button>
               )
             })}
+
+            <div className="my-1 h-px bg-line/70" />
+
+            <Button
+              variant="ghost"
+              selected={favoritesOnly}
+              role="switch"
+              aria-checked={favoritesOnly}
+              onClick={() => onFavoritesOnlyChange(!favoritesOnly)}
+            >
+              <Star
+                size={15}
+                fill={favoritesOnly ? 'currentColor' : 'none'}
+                strokeWidth={favoritesOnly ? 0 : 1.8}
+              />
+              Solo favoritos
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>

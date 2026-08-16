@@ -5,6 +5,7 @@ import { useAuth } from '../modules/auth/AuthContext'
 import { AuthService } from '../modules/auth/services/AuthService'
 import { Button } from '../shared/components/Button'
 import { ThemeControls } from './ThemeControls'
+import { VolumeControls } from './VolumeControls'
 
 export function AppHeader() {
   const navigate = useNavigate()
@@ -23,6 +24,7 @@ export function AppHeader() {
       </Link>
 
       <div className="flex items-center gap-1.5">
+        <VolumeControls />
         <ThemeControls />
         {user && (
           <Button

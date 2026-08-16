@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useLoaderGate } from '../../brand/BrandLoader'
 import { DetailScreen, RevealBlock } from '../../shared/components/DetailScreen'
+import { TrackPlayer } from '../player/components/TrackPlayer'
 import type { TrackPageData } from '../home/interfaces/search.interface'
 import { SpotifyService } from '../home/services/SpotifyService'
 
@@ -53,6 +54,7 @@ export function TrackPage() {
               {data.track.title}
             </h1>
             <p className="mt-3 text-stage-muted">{data.track.subtitle}</p>
+            <TrackPlayer track={data.track} />
           </RevealBlock>
 
           <RevealBlock>

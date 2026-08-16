@@ -41,4 +41,17 @@ export function apiPost<T>(path: string, data?: unknown) {
   })
 }
 
+export function apiPut<T>(path: string, data?: unknown) {
+  return request<T>(path, {
+    method: 'PUT',
+    body: data ? JSON.stringify(data) : undefined,
+  })
+}
+
+export function apiDelete<T>(path: string) {
+  return request<T>(path, {
+    method: 'DELETE',
+  })
+}
+
 export { ApiError }
