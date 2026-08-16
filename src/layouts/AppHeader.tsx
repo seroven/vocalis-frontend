@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { VocalisLogo } from '../brand/VocalisLogo'
 import { useAuth } from '../modules/auth/AuthContext'
 import { AuthService } from '../modules/auth/services/AuthService'
+import { Button } from '../shared/components/Button'
 import { ThemeControls } from './ThemeControls'
 
 export function AppHeader() {
@@ -24,14 +25,13 @@ export function AppHeader() {
       <div className="flex items-center gap-1.5">
         <ThemeControls />
         {user && (
-          <button
-            type="button"
+          <Button
+            variant="icon"
             onClick={() => void handleLogout()}
-            className="icon-btn grid h-10 w-10 place-items-center rounded-full"
             aria-label="Salir"
           >
             <LogOut size={18} />
-          </button>
+          </Button>
         )}
       </div>
     </header>

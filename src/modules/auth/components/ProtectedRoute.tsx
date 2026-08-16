@@ -1,11 +1,12 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { BrandLoader } from '../../../brand/BrandLoader'
 import { useAuth } from '../AuthContext'
 
 export function ProtectedRoute() {
   const { user, ready } = useAuth()
 
   if (!ready) {
-    return <p className="m-auto text-stage-muted">Cargando sesión...</p>
+    return <BrandLoader />
   }
 
   if (!user) {

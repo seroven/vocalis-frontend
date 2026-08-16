@@ -154,7 +154,6 @@ html {
     --app-line 320ms ease,
     --app-accent 320ms ease,
     --app-accent-soft 320ms ease,
-    --app-accent-fg 320ms ease,
     --app-stage 320ms ease,
     --app-stage-fg 320ms ease,
     --app-stage-muted 320ms ease,
@@ -165,7 +164,8 @@ html {
 html,
 body,
 #root {
-  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
 }
 
 body {
@@ -236,6 +236,55 @@ body {
   opacity: 0.85;
 }
 
+.app-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--app-accent) 72%, transparent)
+    color-mix(in srgb, var(--app-stage-fg) 8%, transparent);
+}
+
+.app-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+
+.app-scroll::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.app-scroll::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--app-stage-fg) 7%, transparent);
+  border-radius: 99px;
+  margin-block: 1.15rem;
+  margin-inline: 3px;
+}
+
+.app-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--app-accent) 78%, var(--app-stage));
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.app-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--app-accent);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+.app-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@supports not (scrollbar-gutter: stable) {
+  .app-scroll {
+    overflow-y: scroll;
+  }
+}
+
 .panel {
   background: var(--app-surface);
   box-shadow:
@@ -280,8 +329,16 @@ body {
   box-shadow: 0 14px 36px hsl(var(--hue) 62% 42% / 0.28);
 }
 
+.btn-primary {
+  color: hsl(var(--hue) 40% 98%);
+}
+
 [data-theme='dark'] .cta {
   box-shadow: 0 16px 40px hsl(var(--hue) 70% 20% / 0.42);
+}
+
+[data-theme='dark'] .btn-primary {
+  color: hsl(var(--hue) 30% 10%);
 }
 
 .pressable {
@@ -352,6 +409,13 @@ body {
 
 .search-field::-webkit-search-cancel-button {
   appearance: none;
+}
+
+.lyrics {
+  white-space: pre-wrap;
+  font-size: 1.12rem;
+  line-height: 1.85;
+  color: var(--app-stage-fg);
 }
 
 @keyframes search-scan {

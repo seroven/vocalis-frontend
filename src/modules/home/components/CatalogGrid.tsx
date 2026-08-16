@@ -1,5 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Disc3, Mic2, Music2, type LucideIcon } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { itemPath } from '../itemPath'
 import type { CatalogItem, CatalogItemType } from '../interfaces/search.interface'
 
 const ease = [0.22, 1, 0.36, 1] as const
@@ -41,38 +43,46 @@ function CatalogCard({ item }: { item: CatalogItem }) {
       variants={cardVariants}
       className={`min-w-0 ${artist ? 'text-center' : 'text-left'}`}
     >
-      <motion.div
-        className={meta.cover}
-        whileHover={reduceMotion ? undefined : { y: -4, scale: 1.03 }}
-        transition={{ type: 'spring', stiffness: 340, damping: 20 }}
-      >
-        {item.imageUrl ? (
-          <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="grid h-full w-full place-items-center font-display text-2xl text-accent">
-            {initial}
-          </div>
-        )}
-      </motion.div>
+      <Link to={itemPath(item)} className="block">
+        <motion.div
+          className={meta.cover}
+          whileHover={reduceMotion ? undefined : { y: -4, scale: 1.03 }}
+          transition={{ type: 'spring', stiffness: 340, damping: 20 }}
+        >
+          {item.imageUrl ? (
+            <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="grid h-full w-full place-items-center font-display text-2xl text-accent">
+              {initial}
+            </div>
+          )}
+        </motion.div>
 
-      <div className={`catalog-tag ${artist ? 'mx-auto' : ''}`}>
-        <meta.Icon size={11} strokeWidth={2.2} />
-        {meta.label}
-      </div>
-      <h2 className="mt-1.5 truncate text-[0.86rem] leading-tight font-semibold tracking-tight text-stage-fg">
-        {item.title}
-      </h2>
-      <p className="mt-0.5 truncate text-xs text-stage-muted">{item.subtitle}</p>
+        <div className={`catalog-tag ${artist ? 'mx-auto' : ''}`}>
+          <meta.Icon size={11} strokeWidth={2.2} />
+          {meta.label}
+        </div>
+        <h2 className="mt-1.5 truncate text-[0.86rem] leading-tight font-semibold tracking-tight text-stage-fg">
+          {item.title}
+        </h2>
+        <p className="mt-0.5 truncate text-xs text-stage-muted">{item.subtitle}</p>
+      </Link>
     </motion.article>
   )
 }
 
-export function CatalogGrid({ items }: { items: CatalogItem[] }) {
+export function CatalogGrid({
+  items,
+  className = 'mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 md:grid-cols-5',
+}: {
+  items: CatalogItem[]
+  className?: string
+}) {
   const reduceMotion = useReducedMotion()
 
   return (
     <motion.div
-      className="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 md:grid-cols-5"
+      className={className}
       variants={listVariants}
       initial={reduceMotion ? false : 'hidden'}
       animate="show"

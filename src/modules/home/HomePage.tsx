@@ -1,10 +1,17 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { ButtonLink } from '../../shared/components/Button'
+import { TextField } from '../../shared/components/TextField'
 import { useAuth } from '../auth/AuthContext'
 import { CatalogGrid, SearchPulse } from './components/CatalogGrid'
 import { SearchFilters } from './components/SearchFilters'
 import type { CatalogItem, SearchFilter } from './interfaces/search.interface'
+import {
+  parseSearchFilter,
+  readSearchSnapshot,
+  writeSearchSnapshot,
+} from './lib/searchMemory'
 import { SpotifyService } from './services/SpotifyService'
 
 const ease = [0.22, 1, 0.36, 1] as const
@@ -24,16 +31,62 @@ export function HomePage() {
   const { user } = useAuth()
   const reduceMotion = useReducedMotion()
   const name = useMemo(() => firstName(user?.displayName), [user?.displayName])
-  const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<SearchFilter>('all')
-  const [items, setItems] = useState<CatalogItem[]>([])
-  const [resultQuery, setResultQuery] = useState('')
-  const [resultFilter, setResultFilter] = useState<SearchFilter>('all')
-  const [status, setStatus] = useState<SearchStatus>('idle')
-
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('q') ?? ''
+  const filter = parseSearchFilter(searchParams.get('type'))
   const value = query.trim()
+  const skipDebounce = useRef(value.length >= 2)
+
+  const [items, setItems] = useState<CatalogItem[]>(() => {
+    const snapshot = value.length >= 2 ? readSearchSnapshot(value, filter) : null
+    return snapshot ?? []
+  })
+  const [resultQuery, setResultQuery] = useState(() =>
+    value.length >= 2 && readSearchSnapshot(value, filter) ? value : '',
+  )
+  const [resultFilter, setResultFilter] = useState<SearchFilter>(() =>
+    value.length >= 2 && readSearchSnapshot(value, filter) ? filter : 'all',
+  )
+  const [status, setStatus] = useState<SearchStatus>(() => {
+    const snapshot = value.length >= 2 ? readSearchSnapshot(value, filter) : null
+    if (!snapshot) {
+      return 'idle'
+    }
+    return snapshot.length > 0 ? 'ready' : 'empty'
+  })
+
   const searching = value.length >= 2
   const busy = searching && (value !== resultQuery || filter !== resultFilter)
+
+  function setQuery(nextQuery: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev)
+        if (nextQuery) {
+          params.set('q', nextQuery)
+        } else {
+          params.delete('q')
+        }
+        return params
+      },
+      { replace: true },
+    )
+  }
+
+  function setFilter(nextFilter: SearchFilter) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev)
+        if (nextFilter === 'all') {
+          params.delete('type')
+        } else {
+          params.set('type', nextFilter)
+        }
+        return params
+      },
+      { replace: true },
+    )
+  }
 
   const placeholder =
     filter === 'track'
@@ -49,9 +102,14 @@ export function HomePage() {
       return
     }
 
+    const snapshot = readSearchSnapshot(value, filter)
     let cancelled = false
+    const delay = skipDebounce.current || snapshot ? 0 : 350
+    skipDebounce.current = false
     const timer = window.setTimeout(() => {
-      setStatus('loading')
+      if (!snapshot) {
+        setStatus('loading')
+      }
 
       void SpotifyService.search(value, filter)
         .then((response) => {
@@ -59,6 +117,7 @@ export function HomePage() {
             return
           }
 
+          writeSearchSnapshot(value, filter, response.data.items)
           setItems(response.data.items)
           setResultQuery(value)
           setResultFilter(filter)
@@ -68,10 +127,12 @@ export function HomePage() {
           if (!cancelled) {
             setResultQuery(value)
             setResultFilter(filter)
-            setStatus('error')
+            if (!snapshot) {
+              setStatus('error')
+            }
           }
         })
-    }, 350)
+    }, delay)
 
     return () => {
       cancelled = true
@@ -100,29 +161,31 @@ export function HomePage() {
           transition={{ layout: { duration: 0.5, ease } }}
         >
           <h1 className="font-display text-5xl leading-[1.05] tracking-tight text-stage-fg md:text-6xl">
-            {name ? `Hola, ${name}` : 'Hola'}
+            {name ? (
+              <>
+                Hola, <span className="text-accent">{name}</span>
+              </>
+            ) : (
+              'Hola'
+            )}
           </h1>
 
-          <Link
-            to="/grabaciones"
-            className="cta pressable mt-8 inline-flex rounded-full bg-accent px-6 py-2.5 font-semibold text-accent-fg"
-          >
+          <ButtonLink to="/grabaciones" className="mt-8">
             Mis grabaciones
-          </Link>
+          </ButtonLink>
 
           <div className="mt-10 flex w-full max-w-lg items-center gap-2">
-            <label className={`search-field-wrap min-w-0 flex-1 ${busy ? 'is-busy' : ''}`}>
-              <span className="sr-only">{placeholder}</span>
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={placeholder}
-                className="search-field"
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </label>
+            <TextField
+              label={placeholder}
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={placeholder}
+              autoComplete="off"
+              spellCheck={false}
+              busy={busy}
+              className="min-w-0 flex-1"
+            />
             <SearchFilters value={filter} onChange={setFilter} />
           </div>
 

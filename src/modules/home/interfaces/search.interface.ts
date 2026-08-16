@@ -13,3 +13,32 @@ export interface CatalogItem {
 export interface CatalogSearchData {
   items: CatalogItem[]
 }
+
+export interface AlbumDetail {
+  id: string
+  title: string
+  subtitle: string
+  imageUrl: string | null
+  tracks: CatalogItem[]
+}
+
+export interface ArtistDetail {
+  id: string
+  title: string
+  imageUrl: string | null
+  tracks: CatalogItem[]
+  albums: CatalogItem[]
+}
+
+export interface TrackDetail {
+  id: string
+  title: string
+  subtitle: string
+  imageUrl: string | null
+  artistName: string
+}
+
+export interface TrackPageData {
+  track: TrackDetail
+  lyrics: string | null
+}

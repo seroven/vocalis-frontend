@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { VocalisLogo } from '../../brand/VocalisLogo'
+import { Button } from '../../shared/components/Button'
 import { useAuth } from './AuthContext'
 import { SpotifyIcon } from './components/SpotifyIcon'
 import { AuthService } from './services/AuthService'
@@ -35,17 +36,16 @@ export function LoginPage() {
       <p className="mx-auto mt-6 max-w-md text-lg leading-relaxed text-stage-muted">
         Entra con Spotify Premium y convierte cada práctica en algo que apetece repetir.
       </p>
-      <button
-        type="button"
-        className="cta pressable mt-10 inline-flex items-center gap-3 rounded-full bg-accent py-2.5 pr-6 pl-2.5 font-semibold text-accent-fg disabled:cursor-wait disabled:opacity-70 disabled:hover:scale-100"
+      <Button
+        className="mt-10 gap-3 py-2.5 pr-6 pl-2.5"
         onClick={() => void handleLogin()}
         disabled={loading}
       >
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-accent-fg/15">
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-current/15">
           <SpotifyIcon size={20} />
         </span>
         {loading ? 'Redirigiendo...' : 'Continuar con Spotify'}
-      </button>
+      </Button>
       {error && <p className="mt-4 text-rose-400">{error}</p>}
     </section>
   )

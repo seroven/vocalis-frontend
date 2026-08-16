@@ -1,11 +1,9 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { VocalisLogo } from '../../brand/VocalisLogo'
+import { BrandLoader, LOADER_HOLD_MS } from '../../brand/BrandLoader'
 import { useAuth } from './AuthContext'
 import type { PublicUser } from './interfaces/auth.interface'
 import { AuthService } from './services/AuthService'
-
-const HOLD_MS = 2500
 
 let inflightKey: string | null = null
 let inflightLogin: Promise<PublicUser> | null = null
@@ -52,7 +50,7 @@ export function CallbackPage() {
 
     let cancelled = false
 
-    Promise.all([completeLoginOnce(code, state), wait(HOLD_MS)])
+    Promise.all([completeLoginOnce(code, state), wait(LOADER_HOLD_MS)])
       .then(([user]) => {
         if (cancelled) {
           return
@@ -76,9 +74,11 @@ export function CallbackPage() {
 
   return (
     <section className="m-auto w-full max-w-2xl text-center">
-      <h1 className="flex justify-center">
-        <VocalisLogo animated variant="wordmark" className="h-14 w-auto md:h-16" />
-      </h1>
+      <BrandLoader
+        className="min-h-0 flex-none"
+        logoClassName="h-14 w-auto md:h-16"
+        label="Entrando a Vocalis"
+      />
     </section>
   )
 }

@@ -9,6 +9,7 @@ import {
 type VocalisLogoProps = {
   className?: string
   animated?: boolean
+  interactive?: boolean
   variant?: 'mark' | 'wordmark'
 }
 
@@ -20,6 +21,7 @@ const LETTER_STAGGER = 0.2
 export function VocalisLogo({
   className,
   animated = false,
+  interactive = true,
   variant = 'mark',
 }: VocalisLogoProps) {
   const reduceMotion = useReducedMotion()
@@ -28,16 +30,18 @@ export function VocalisLogo({
   const fillDelay = wordmark
     ? (WORDMARK_LETTERS.length - 1) * LETTER_STAGGER + LETTER_DURATION * 0.55
     : 1.2
+  const canPress = interactive && !reduceMotion
 
   return (
     <motion.svg
       viewBox={wordmark ? WORDMARK_VIEWBOX : '328 341 679 483'}
-      className={`vocalis-logo ${className ?? ''}`}
+      className={`vocalis-logo ${interactive ? '' : 'pointer-events-none'} ${className ?? ''}`}
       role="img"
       aria-label="Vocalis"
       fill="none"
-      whileHover={reduceMotion ? undefined : { scale: 1.07, rotate: -2 }}
-      whileTap={reduceMotion ? undefined : { scale: 0.97, rotate: 0 }}
+      inherit={false}
+      whileHover={canPress ? { scale: 1.07, rotate: -2 } : undefined}
+      whileTap={canPress ? { scale: 0.97, rotate: 0 } : undefined}
       transition={{ type: 'spring', stiffness: 340, damping: 18 }}
     >
       {shouldAnimate && wordmark &&

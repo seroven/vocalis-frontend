@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Disc3, Moon, Palette, Sun } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Button } from '../shared/components/Button'
 import { COLOR_PRESETS } from '../theme/theme'
 import { useTheme } from '../theme/ThemeContext'
 
@@ -23,15 +24,14 @@ export function ThemeControls() {
   return (
     <div className="flex items-center gap-1.5">
       <div className="relative" ref={panelRef}>
-        <button
-          type="button"
+        <Button
+          variant="icon"
           onClick={() => setOpen((current) => !current)}
-          className="icon-btn grid h-10 w-10 place-items-center rounded-full"
           aria-label="Elegir color"
           aria-expanded={open}
         >
           <Palette size={18} />
-        </button>
+        </Button>
 
         <AnimatePresence>
           {open && (
@@ -70,10 +70,9 @@ export function ThemeControls() {
         </AnimatePresence>
       </div>
 
-      <button
-        type="button"
+      <Button
+        variant="icon"
         onClick={toggleMode}
-        className="icon-btn grid h-10 w-10 place-items-center rounded-full"
         aria-label={mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -88,7 +87,7 @@ export function ThemeControls() {
             {mode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </motion.span>
         </AnimatePresence>
-      </button>
+      </Button>
     </div>
   )
 }

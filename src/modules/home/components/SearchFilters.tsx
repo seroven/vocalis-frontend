@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Disc3, LayoutGrid, Mic2, Music2, Search, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Button } from '../../../shared/components/Button'
 import type { SearchFilter } from '../interfaces/search.interface'
 
 const ease = [0.22, 1, 0.36, 1] as const
@@ -45,17 +46,15 @@ export function SearchFilters({ value, onChange }: SearchFiltersProps) {
 
   return (
     <div className="relative" ref={panelRef}>
-      <button
-        type="button"
+      <Button
+        variant="icon"
         onClick={() => setOpen((current) => !current)}
-        className={`icon-btn grid h-10 w-10 place-items-center rounded-full ${
-          filtered || open ? 'text-accent' : ''
-        }`}
+        className={filtered || open ? 'text-accent' : ''}
         aria-label="Filtros de búsqueda"
         aria-expanded={open}
       >
         <Search size={18} />
-      </button>
+      </Button>
 
       <AnimatePresence>
         {open && (
@@ -72,24 +71,20 @@ export function SearchFilters({ value, onChange }: SearchFiltersProps) {
               const selected = value === filter.id
 
               return (
-                <button
+                <Button
                   key={filter.id}
-                  type="button"
+                  variant="ghost"
+                  selected={selected}
                   role="radio"
                   aria-checked={selected}
                   onClick={() => {
                     onChange(filter.id)
                     setOpen(false)
                   }}
-                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
-                    selected
-                      ? 'bg-accent-soft font-semibold text-accent'
-                      : 'text-stage-muted hover:text-stage-fg'
-                  }`}
                 >
                   <filter.Icon size={15} strokeWidth={selected ? 2.3 : 1.8} />
                   {filter.label}
-                </button>
+                </Button>
               )
             })}
           </motion.div>
