@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Disc3, LayoutGrid, Mic2, Music2, Search, Star, type LucideIcon } from 'lucide-react'
+import { Disc3, LayoutGrid, Mic2, Music2, ScanText, Search, Star, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../../../shared/components/Button'
 import type { SearchFilter } from '../interfaces/search.interface'
@@ -18,6 +18,8 @@ type SearchFiltersProps = {
   onChange: (filter: SearchFilter) => void
   favoritesOnly: boolean
   onFavoritesOnlyChange: (value: boolean) => void
+  focusOnly: boolean
+  onFocusOnlyChange: (value: boolean) => void
 }
 
 export function SearchFilters({
@@ -25,10 +27,12 @@ export function SearchFilters({
   onChange,
   favoritesOnly,
   onFavoritesOnlyChange,
+  focusOnly,
+  onFocusOnlyChange,
 }: SearchFiltersProps) {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
-  const filtered = value !== 'all' || favoritesOnly
+  const filtered = value !== 'all' || favoritesOnly || focusOnly
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
@@ -60,7 +64,13 @@ export function SearchFilters({
         aria-label="Filtros de búsqueda"
         aria-expanded={open}
       >
-        {favoritesOnly ? <Star size={18} fill="currentColor" strokeWidth={0} /> : <Search size={18} />}
+        {focusOnly ? (
+          <ScanText size={18} />
+        ) : favoritesOnly ? (
+          <Star size={18} fill="currentColor" strokeWidth={0} />
+        ) : (
+          <Search size={18} />
+        )}
       </Button>
 
       <AnimatePresence>
@@ -107,6 +117,17 @@ export function SearchFilters({
                 strokeWidth={favoritesOnly ? 0 : 1.8}
               />
               Solo favoritos
+            </Button>
+
+            <Button
+              variant="ghost"
+              selected={focusOnly}
+              role="switch"
+              aria-checked={focusOnly}
+              onClick={() => onFocusOnlyChange(!focusOnly)}
+            >
+              <ScanText size={15} strokeWidth={focusOnly ? 2.3 : 1.8} />
+              Solo Focus
             </Button>
           </motion.div>
         )}

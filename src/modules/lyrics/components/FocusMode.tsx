@@ -78,7 +78,11 @@ export function FocusMode({
     setError(null)
 
     try {
-      const response = await LyricsSyncService.save(track.id, lines)
+      const response = await LyricsSyncService.save(track.id, lines, {
+        title: track.title,
+        subtitle: track.subtitle,
+        imageUrl: track.imageUrl,
+      })
       setLines(response.data.lines)
       setSource('user')
       setEditing(!response.data.complete)

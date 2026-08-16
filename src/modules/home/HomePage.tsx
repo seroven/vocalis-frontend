@@ -5,6 +5,7 @@ import { ButtonLink } from '../../shared/components/Button'
 import { TextField } from '../../shared/components/TextField'
 import { useAuth } from '../auth/AuthContext'
 import { FavoritesService } from '../favorites/services/FavoritesService'
+import { LyricsSyncService } from '../lyrics/services/LyricsSyncService'
 import { CatalogGrid, SearchPulse } from './components/CatalogGrid'
 import { SearchFilters } from './components/SearchFilters'
 import type { CatalogItem, SearchFilter } from './interfaces/search.interface'
@@ -36,12 +37,14 @@ export function HomePage() {
   const query = searchParams.get('q') ?? ''
   const filter = parseSearchFilter(searchParams.get('type'))
   const favoritesOnly = searchParams.get('fav') === '1'
+  const focusOnly = searchParams.get('focus') === '1'
+  const libraryOnly = favoritesOnly || focusOnly
   const value = query.trim()
-  const listing = favoritesOnly || value.length >= 2
+  const listing = libraryOnly || value.length >= 2
   const skipDebounce = useRef(listing)
 
   const [items, setItems] = useState<CatalogItem[]>(() => {
-    if (favoritesOnly) {
+    if (libraryOnly) {
       return []
     }
 
@@ -49,14 +52,15 @@ export function HomePage() {
     return snapshot ?? []
   })
   const [resultQuery, setResultQuery] = useState(() =>
-    !favoritesOnly && value.length >= 2 && readSearchSnapshot(value, filter) ? value : '',
+    !libraryOnly && value.length >= 2 && readSearchSnapshot(value, filter) ? value : '',
   )
   const [resultFilter, setResultFilter] = useState<SearchFilter>(() =>
-    !favoritesOnly && value.length >= 2 && readSearchSnapshot(value, filter) ? filter : 'all',
+    !libraryOnly && value.length >= 2 && readSearchSnapshot(value, filter) ? filter : 'all',
   )
   const [resultFavorites, setResultFavorites] = useState(false)
+  const [resultFocus, setResultFocus] = useState(false)
   const [status, setStatus] = useState<SearchStatus>(() => {
-    if (favoritesOnly) {
+    if (libraryOnly) {
       return 'idle'
     }
 
@@ -69,7 +73,10 @@ export function HomePage() {
 
   const busy =
     listing &&
-    (value !== resultQuery || filter !== resultFilter || favoritesOnly !== resultFavorites)
+    (value !== resultQuery ||
+      filter !== resultFilter ||
+      favoritesOnly !== resultFavorites ||
+      focusOnly !== resultFocus)
 
   function setQuery(nextQuery: string) {
     setSearchParams(
@@ -116,9 +123,28 @@ export function HomePage() {
     )
   }
 
-  const placeholder = favoritesOnly
-    ? 'Filtra tus favoritos'
-    : filter === 'track'
+  function setFocusOnly(next: boolean) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev)
+        if (next) {
+          params.set('focus', '1')
+        } else {
+          params.delete('focus')
+        }
+        return params
+      },
+      { replace: true },
+    )
+  }
+
+  const placeholder = focusOnly && favoritesOnly
+    ? 'Filtra tus Focus favoritos'
+    : focusOnly
+      ? 'Filtra tus canciones Focus'
+      : favoritesOnly
+        ? 'Filtra tus favoritos'
+        : filter === 'track'
       ? 'Busca una canción'
       : filter === 'album'
         ? 'Busca un álbum'
@@ -132,18 +158,33 @@ export function HomePage() {
     }
 
     const snapshot =
-      !favoritesOnly && value.length >= 2 ? readSearchSnapshot(value, filter) : null
+      !libraryOnly && value.length >= 2 ? readSearchSnapshot(value, filter) : null
     let cancelled = false
-    const delay = skipDebounce.current || snapshot || favoritesOnly ? 0 : 350
+    const delay = skipDebounce.current || snapshot || libraryOnly ? 0 : 350
     skipDebounce.current = false
     const timer = window.setTimeout(() => {
       if (!snapshot) {
         setStatus('loading')
       }
 
-      const request = favoritesOnly
-        ? FavoritesService.list(filter, value)
-        : SpotifyService.search(value, filter)
+      const request = focusOnly
+        ? favoritesOnly
+          ? Promise.all([
+              LyricsSyncService.list(value),
+              FavoritesService.list('track', value),
+            ]).then(([focus, favorites]) => {
+              const favoriteIds = new Set(favorites.data.items.map((item) => item.id))
+              return {
+                ...focus,
+                data: {
+                  items: focus.data.items.filter((item) => favoriteIds.has(item.id)),
+                },
+              }
+            })
+          : LyricsSyncService.list(value)
+        : favoritesOnly
+          ? FavoritesService.list(filter, value)
+          : SpotifyService.search(value, filter)
 
       void request
         .then((response) => {
@@ -151,7 +192,7 @@ export function HomePage() {
             return
           }
 
-          if (!favoritesOnly) {
+          if (!libraryOnly) {
             writeSearchSnapshot(value, filter, response.data.items)
           }
 
@@ -159,6 +200,7 @@ export function HomePage() {
           setResultQuery(value)
           setResultFilter(filter)
           setResultFavorites(favoritesOnly)
+          setResultFocus(focusOnly)
           setStatus(response.data.items.length > 0 ? 'ready' : 'empty')
         })
         .catch(() => {
@@ -166,6 +208,7 @@ export function HomePage() {
             setResultQuery(value)
             setResultFilter(filter)
             setResultFavorites(favoritesOnly)
+            setResultFocus(focusOnly)
             if (!snapshot) {
               setStatus('error')
             }
@@ -177,16 +220,24 @@ export function HomePage() {
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [favoritesOnly, filter, listing, value])
+  }, [favoritesOnly, filter, focusOnly, libraryOnly, listing, value])
 
   const visibleItems = listing ? items : []
   const message =
     !busy && listing && status === 'empty'
-      ? favoritesOnly
+      ? focusOnly && favoritesOnly
         ? value
-          ? 'Ningún favorito coincide con eso.'
-          : 'Aún no tienes favoritos.'
-        : 'No encontramos nada con esa búsqueda.'
+          ? 'Ningún Focus favorito coincide con eso.'
+          : 'Aún no tienes canciones Focus en favoritos.'
+        : focusOnly
+          ? value
+            ? 'Ninguna canción Focus coincide con eso.'
+            : 'Aún no tienes canciones listas en Focus.'
+          : favoritesOnly
+            ? value
+              ? 'Ningún favorito coincide con eso.'
+              : 'Aún no tienes favoritos.'
+            : 'No encontramos nada con esa búsqueda.'
       : !busy && listing && status === 'error'
         ? 'No se pudo buscar ahora. Prueba de nuevo.'
         : null
@@ -234,6 +285,8 @@ export function HomePage() {
               onChange={setFilter}
               favoritesOnly={favoritesOnly}
               onFavoritesOnlyChange={setFavoritesOnly}
+              focusOnly={focusOnly}
+              onFocusOnlyChange={setFocusOnly}
             />
           </div>
 
@@ -261,7 +314,7 @@ export function HomePage() {
       <AnimatePresence mode="wait">
         {visibleItems.length > 0 ? (
           <motion.div
-            key={`${resultQuery}:${resultFilter}:${resultFavorites ? 'fav' : 'all'}`}
+            key={`${resultQuery}:${resultFilter}:${resultFavorites ? 'fav' : 'all'}:${resultFocus ? 'focus' : 'all'}`}
             className="mx-auto w-full max-w-[53rem]"
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{
