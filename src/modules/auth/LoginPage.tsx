@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { VocalisLogo } from '../../brand/VocalisLogo'
 import { useAuth } from './AuthContext'
 import { SpotifyIcon } from './components/SpotifyIcon'
 import { AuthService } from './services/AuthService'
@@ -28,8 +29,8 @@ export function LoginPage() {
 
   return (
     <section className="mx-auto w-full max-w-2xl text-center">
-      <h1 className="font-display text-5xl leading-[1.05] tracking-tight text-stage-fg md:text-6xl">
-        Canta con <span className="text-accent">Vocalis</span>
+      <h1 className="flex justify-center">
+        <VocalisLogo animated variant="wordmark" className="h-14 w-auto text-accent md:h-16" />
       </h1>
       <p className="mx-auto mt-6 max-w-md text-lg leading-relaxed text-stage-muted">
         Entra con Spotify Premium y convierte cada práctica en algo que apetece repetir.

@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ApiError } from '../../config/api'
+import { VocalisLogo } from '../../brand/VocalisLogo'
 import { useAuth } from './AuthContext'
 import type { PublicUser } from './interfaces/auth.interface'
 import { AuthService } from './services/AuthService'
+
+const HOLD_MS = 2500
 
 let inflightKey: string | null = null
 let inflightLogin: Promise<PublicUser> | null = null
@@ -23,11 +25,16 @@ function completeLoginOnce(code: string, state: string) {
   return inflightLogin
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
 export function CallbackPage() {
   const navigate = useNavigate()
   const { setUser } = useAuth()
   const [searchParams] = useSearchParams()
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const spotifyError = searchParams.get('error')
@@ -35,19 +42,18 @@ export function CallbackPage() {
     const state = searchParams.get('state')
 
     if (spotifyError) {
-      setError('El acceso a Spotify fue cancelado o rechazado')
+      navigate('/login', { replace: true })
       return
     }
 
     if (!code || !state) {
-      setError('Spotify no devolvió un código de autorización válido')
       return
     }
 
     let cancelled = false
 
-    completeLoginOnce(code, state)
-      .then((user) => {
+    Promise.all([completeLoginOnce(code, state), wait(HOLD_MS)])
+      .then(([user]) => {
         if (cancelled) {
           return
         }
@@ -55,17 +61,12 @@ export function CallbackPage() {
         setUser(user)
         navigate('/', { replace: true })
       })
-      .catch((err: unknown) => {
+      .catch(() => {
         if (cancelled) {
           return
         }
 
-        if (err instanceof ApiError) {
-          setError(err.message)
-          return
-        }
-
-        setError('No se pudo completar el login con Spotify')
+        navigate('/login', { replace: true })
       })
 
     return () => {
@@ -74,13 +75,10 @@ export function CallbackPage() {
   }, [navigate, searchParams, setUser])
 
   return (
-    <section className="w-full text-center">
-      <h1 className="font-display text-6xl tracking-tight text-stage-fg md:text-7xl">Vocalis</h1>
-      {error ? (
-        <p className="mt-4 text-rose-400">{error}</p>
-      ) : (
-        <p className="mt-4 text-lg text-stage-muted">Conectando...</p>
-      )}
+    <section className="mx-auto w-full max-w-2xl text-center">
+      <h1 className="flex justify-center">
+        <VocalisLogo animated variant="wordmark" className="h-14 w-auto md:h-16" />
+      </h1>
     </section>
   )
 }

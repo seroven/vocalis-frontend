@@ -26,7 +26,7 @@ export function HomePage() {
           Hola{user?.displayName ? `, ${user.displayName}` : ''}
         </h1>
         <p className="mt-6 max-w-lg text-lg leading-relaxed text-stage-muted">
-          Ya estás dentro de <span className="font-medium text-accent">Vocalis</span>.
+          Ya estás dentro de <span className="font-semibold text-accent">Vocalis</span>.
           Aquí va a vivir el entrenador: poco a poco, sin prisa, con ganas de volver.
         </p>
       </div>

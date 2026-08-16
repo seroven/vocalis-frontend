@@ -2,8 +2,24 @@
 
 @font-face {
   font-family: 'Nunito';
-  src: url('../assets/fonts/nunito.ttf') format('truetype');
-  font-weight: 200 1000;
+  src: url('../assets/fonts/Nunito-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('../assets/fonts/Nunito-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('../assets/fonts/Nunito-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
   font-style: normal;
   font-display: swap;
 }
@@ -282,15 +298,19 @@ body {
 }
 
 .logo-link {
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  display: inline-flex;
+  overflow: visible;
 }
 
-.logo-link:hover {
-  transform: scale(1.03);
+.vocalis-logo {
+  overflow: visible;
+  cursor: pointer;
+  transform-origin: center;
+  transition: filter 220ms ease;
 }
 
-.logo-link:active {
-  transform: scale(0.98);
+.vocalis-logo:hover {
+  filter: drop-shadow(0 10px 18px hsl(var(--hue) 70% 48% / 0.32));
 }
 
 .disc-swatch {
@@ -323,8 +343,8 @@ body {
   .icon-btn:active,
   .pressable:hover,
   .pressable:active,
-  .logo-link:hover,
-  .logo-link:active,
+  .vocalis-logo,
+  .vocalis-logo:hover,
   .disc-swatch:hover,
   .disc-swatch:active {
     transform: none;
