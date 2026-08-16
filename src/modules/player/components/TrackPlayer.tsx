@@ -1,8 +1,9 @@
 import { Loader2, Pause, Play } from 'lucide-react'
 import type { CSSProperties } from 'react'
+import { cx } from '../../../shared/lib/cx'
 import { Button } from '../../../shared/components/Button'
 import type { TrackDetail } from '../../home/interfaces/search.interface'
-import { useSpotifyPlayer } from '../hooks/useSpotifyPlayer'
+import type { PlayerSession } from '../interfaces/player.interface'
 
 function formatTime(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000))
@@ -11,16 +12,33 @@ function formatTime(ms: number) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
-export function TrackPlayer({ track }: { track: TrackDetail }) {
-  const { status, position, duration, error, toggle, seek, busy, loadingLabel } =
-    useSpotifyPlayer(track.id, track.durationMs ?? 0)
+export function TrackPlayer({
+  track,
+  player,
+  compact = false,
+}: {
+  track: TrackDetail
+  player: PlayerSession
+  compact?: boolean
+}) {
+  const { status, position, duration, error, toggle, seek, busy, loadingLabel } = player
   const playing = status === 'playing'
   const max = duration || track.durationMs || 0
   const progress = max > 0 ? Math.min(100, (position / max) * 100) : 0
 
   return (
-    <div className="panel mt-8 flex items-center gap-4 rounded-[1.6rem] p-3.5 text-left md:p-4">
-      <div className="catalog-cover is-release h-14 w-14 shrink-0 md:h-16 md:w-16">
+    <div
+      className={cx(
+        'panel flex items-center gap-4 rounded-[1.6rem] text-left',
+        compact ? 'p-3' : 'mt-8 p-3.5 md:p-4',
+      )}
+    >
+      <div
+        className={cx(
+          'catalog-cover is-release shrink-0',
+          compact ? 'h-12 w-12' : 'h-14 w-14 md:h-16 md:w-16',
+        )}
+      >
         {track.imageUrl ? (
           <img src={track.imageUrl} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -32,7 +50,7 @@ export function TrackPlayer({ track }: { track: TrackDetail }) {
 
       <Button
         variant="icon"
-        className="player-play h-11 w-11 shrink-0"
+        className={cx('player-play shrink-0', compact ? 'h-10 w-10' : 'h-11 w-11')}
         aria-label={busy ? 'Cargando' : playing ? 'Pausar' : 'Reproducir'}
         aria-busy={busy}
         disabled={busy || status === 'error'}

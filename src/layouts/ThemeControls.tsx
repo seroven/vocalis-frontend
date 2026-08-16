@@ -23,7 +23,7 @@ export function ThemeControls() {
 
   return (
     <div className="flex items-center gap-1.5">
-      <div className="relative" ref={panelRef}>
+      <div className="relative z-80" ref={panelRef}>
         <Button
           variant="icon"
           onClick={() => setOpen((current) => !current)}
@@ -40,7 +40,7 @@ export function ThemeControls() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="panel absolute top-[calc(100%+10px)] right-0 flex items-center gap-1 rounded-full px-2 py-1.5"
+              className="panel absolute top-[calc(100%+10px)] right-0 z-80 flex items-center gap-1 rounded-full px-2 py-1.5"
               role="radiogroup"
               aria-label="Color base"
             >

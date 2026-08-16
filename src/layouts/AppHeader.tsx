@@ -18,7 +18,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="z-20 mx-auto flex w-[min(1120px,calc(100%-1rem))] items-center justify-between py-4">
+    <header className="relative z-50 mx-auto flex w-[min(1120px,calc(100%-1rem))] items-center justify-between py-4">
       <Link to="/" className="logo-link text-accent" aria-label="Vocalis">
         <VocalisLogo animated className="h-8 w-auto" />
       </Link>

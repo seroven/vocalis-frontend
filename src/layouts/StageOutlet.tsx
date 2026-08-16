@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useOutlet } from 'react-router-dom'
+import { pageMotion } from '../shared/lib/page-motion'
 
 export function StageOutlet() {
   const location = useLocation()
@@ -9,10 +10,7 @@ export function StageOutlet() {
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -12 }}
-        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+        {...pageMotion}
         className="flex min-h-full w-full flex-1 flex-col"
       >
         {outlet}

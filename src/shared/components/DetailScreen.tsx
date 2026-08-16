@@ -38,6 +38,7 @@ export function DetailScreen({
   errorMessage,
   className,
   centered = false,
+  actions,
   children,
 }: {
   ready: boolean
@@ -45,14 +46,16 @@ export function DetailScreen({
   errorMessage: string
   className?: string
   centered?: boolean
+  actions?: ReactNode
   children: ReactNode
 }) {
   const reduceMotion = useReducedMotion()
 
   return (
     <section className={cx('mx-auto flex min-h-full w-full flex-1 flex-col', className)}>
-      <div className={centered ? 'text-left' : undefined}>
+      <div className="mb-6 flex items-center justify-between gap-3">
         <BackButton />
+        {actions}
       </div>
 
       {error ? (

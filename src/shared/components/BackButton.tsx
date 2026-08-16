@@ -15,7 +15,7 @@ export function BackButton() {
   }
 
   return (
-    <Button variant="icon" className="mb-6" aria-label="Volver" onClick={handleBack}>
+    <Button variant="icon" aria-label="Volver" onClick={handleBack}>
       <ArrowLeft size={18} />
     </Button>
   )
