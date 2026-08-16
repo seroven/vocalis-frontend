@@ -2,6 +2,12 @@ export type SpotifyPlaybackState = {
   paused: boolean
   position: number
   duration: number
+  track_window?: {
+    current_track?: {
+      id?: string | null
+      uri?: string | null
+    } | null
+  }
 }
 
 export type SpotifyPlayer = {

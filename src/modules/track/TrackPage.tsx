@@ -54,7 +54,7 @@ export function TrackPage() {
               {data.track.title}
             </h1>
             <p className="mt-3 text-stage-muted">{data.track.subtitle}</p>
-            <TrackPlayer track={data.track} />
+            <TrackPlayer key={data.track.id} track={data.track} />
           </RevealBlock>
 
           <RevealBlock>

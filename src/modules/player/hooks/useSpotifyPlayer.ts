@@ -1,7 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PlayerStatus } from '../interfaces/player.interface'
-import { loadSpotifySdk, type SpotifyPlayer } from '../lib/spotifySdk'
+import {
+  loadSpotifySdk,
+  type SpotifyPlaybackState,
+  type SpotifyPlayer,
+} from '../lib/spotifySdk'
 import { SpotifyPlayerService } from '../services/SpotifyPlayerService'
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+function stateTrackId(state: SpotifyPlaybackState | null) {
+  const track = state?.track_window?.current_track
+  if (!track) {
+    return null
+  }
+
+  if (track.id) {
+    return track.id
+  }
+
+  const uri = track.uri
+  if (uri?.startsWith('spotify:track:')) {
+    return uri.slice('spotify:track:'.length)
+  }
+
+  return null
+}
 
 const VOLUME_KEY = 'vocalis.player.volume'
 const DEFAULT_VOLUME = 0.8
@@ -27,11 +55,9 @@ function readStoredVolume() {
 let sharedPlayer: SpotifyPlayer | null = null
 let sharedDeviceId: string | null = null
 let connecting: Promise<string> | null = null
-let uses = 0
-let releaseTimer: number | null = null
-let connectGeneration = 0
 let sharedVolume = readStoredVolume()
 const volumeListeners = new Set<(volume: number) => void>()
+const playbackListeners = new Set<(state: SpotifyPlaybackState | null) => void>()
 
 export function setPlayerVolume(volume: number) {
   sharedVolume = Math.min(1, Math.max(0, volume))
@@ -59,8 +85,74 @@ export function usePlayerVolume() {
   return { volume, setVolume: setPlayerVolume }
 }
 
-async function connectPlayer() {
-  if (sharedDeviceId && sharedPlayer) {
+async function createPlayer() {
+  await loadSpotifySdk()
+
+  if (!window.Spotify) {
+    throw new Error('Spotify no está disponible en este navegador')
+  }
+
+  const player = new window.Spotify.Player({
+    name: 'Vocalis',
+    getOAuthToken: (cb) => {
+      void SpotifyPlayerService.accessToken().then(cb)
+    },
+    volume: sharedVolume,
+  })
+
+  void player.activateElement?.()
+
+  const deviceId = await new Promise<string>((resolve, reject) => {
+    let settled = false
+
+    function fail(message: string) {
+      if (!settled) {
+        settled = true
+        reject(new Error(message))
+      }
+    }
+
+    player.addListener('ready', (payload) => {
+      const id = (payload as { device_id?: string }).device_id
+      if (!id || settled) {
+        return
+      }
+
+      settled = true
+      sharedDeviceId = id
+      resolve(id)
+    })
+
+    player.addListener('initialization_error', () => {
+      fail('No se pudo iniciar el reproductor')
+    })
+    player.addListener('authentication_error', () => {
+      fail('Vuelve a entrar con Spotify para reproducir')
+    })
+    player.addListener('account_error', () => {
+      fail('Spotify Premium es necesario para reproducir')
+    })
+    player.addListener('player_state_changed', (payload) => {
+      playbackListeners.forEach((listener) => {
+        listener((payload ?? null) as SpotifyPlaybackState | null)
+      })
+    })
+
+    void player.connect().then((ok) => {
+      if (!ok) {
+        fail('No se pudo conectar el reproductor de Spotify')
+      }
+    })
+  })
+
+  sharedPlayer = player
+  sharedDeviceId = deviceId
+  void player.setVolume(sharedVolume)
+  return deviceId
+}
+
+async function ensurePlayer() {
+  if (sharedPlayer && sharedDeviceId) {
     return sharedDeviceId
   }
 
@@ -68,112 +160,41 @@ async function connectPlayer() {
     return connecting
   }
 
-  const generation = connectGeneration + 1
-  connectGeneration = generation
-
-  connecting = (async () => {
-    await loadSpotifySdk()
-
-    if (!window.Spotify) {
-      throw new Error('Spotify no está disponible en este navegador')
-    }
-
-    const player = new window.Spotify.Player({
-      name: 'Vocalis',
-      getOAuthToken: (cb) => {
-        void SpotifyPlayerService.accessToken().then(cb)
-      },
-      volume: sharedVolume,
-    })
-
-    const deviceId = await new Promise<string>((resolve, reject) => {
-      let settled = false
-
-      function fail(message: string) {
-        if (!settled) {
-          settled = true
-          reject(new Error(message))
-        }
-      }
-
-      player.addListener('ready', (payload) => {
-        const id = (payload as { device_id?: string }).device_id
-        if (!id || settled) {
-          return
-        }
-
-        settled = true
-        resolve(id)
-      })
-
-      player.addListener('initialization_error', () => {
-        fail('No se pudo iniciar el reproductor')
-      })
-      player.addListener('authentication_error', () => {
-        fail('Vuelve a entrar con Spotify para reproducir')
-      })
-      player.addListener('account_error', () => {
-        fail('Spotify Premium es necesario para reproducir')
-      })
-
-      void player.connect().then((ok) => {
-        if (!ok) {
-          fail('No se pudo conectar el reproductor de Spotify')
-        }
-      })
-    })
-
-    if (generation !== connectGeneration) {
-      player.disconnect()
-      throw new Error('El reproductor se reconectó')
-    }
-
-    sharedPlayer = player
-    sharedDeviceId = deviceId
-    void player.setVolume(sharedVolume)
-    return deviceId
-  })().finally(() => {
+  connecting = createPlayer().finally(() => {
     connecting = null
   })
 
   return connecting
 }
 
-function acquirePlayer() {
-  uses += 1
+async function waitForPlayingTrack(trackId: string, timeoutMs = 5000) {
+  const deadline = Date.now() + timeoutMs
 
-  if (releaseTimer !== null) {
-    window.clearTimeout(releaseTimer)
-    releaseTimer = null
-  }
+  while (Date.now() < deadline) {
+    const state = (await sharedPlayer?.getCurrentState()) ?? null
 
-  return connectPlayer()
-}
-
-function releasePlayer() {
-  uses = Math.max(0, uses - 1)
-
-  if (uses > 0) {
-    return
-  }
-
-  releaseTimer = window.setTimeout(() => {
-    releaseTimer = null
-
-    if (uses > 0) {
-      return
+    if (state && stateTrackId(state) === trackId && !state.paused) {
+      return state
     }
 
-    connectGeneration += 1
-    sharedPlayer?.disconnect()
-    sharedPlayer = null
-    sharedDeviceId = null
-    connecting = null
-  }, 1000)
+    await wait(150)
+  }
+
+  return null
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    try {
+      sharedPlayer?.disconnect()
+    } catch {
+      // ignore
+    }
+  })
 }
 
 export function useSpotifyPlayer(trackId: string | undefined, durationMs = 0) {
-  const [status, setStatus] = useState<PlayerStatus>('connecting')
+  const [status, setStatus] = useState<PlayerStatus>('ready')
   const [position, setPosition] = useState(0)
   const [duration, setDuration] = useState(durationMs)
   const [error, setError] = useState<string | null>(null)
@@ -189,109 +210,124 @@ export function useSpotifyPlayer(trackId: string | undefined, durationMs = 0) {
   }, [durationMs])
 
   useEffect(() => {
-    let cancelled = false
     started.current = false
     pendingRef.current = false
     setPending(false)
     setPosition(0)
-    setStatus('connecting')
+    setDuration(durationMs)
+    setStatus('ready')
     setError(null)
-
-    void acquirePlayer()
-      .then((deviceId) => {
-        if (!cancelled && deviceId) {
-          setStatus('ready')
-        }
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled) {
-          setStatus('error')
-          setError(
-            reason instanceof Error ? reason.message : 'No se pudo abrir el reproductor',
-          )
-        }
-      })
+    void loadSpotifySdk()
+    void sharedPlayer?.pause().catch(() => undefined)
 
     return () => {
-      cancelled = true
-      releasePlayer()
+      void sharedPlayer?.pause().catch(() => undefined)
     }
   }, [trackId])
 
   useEffect(() => {
-    if (status !== 'playing') {
-      return
+    function applyState(state: SpotifyPlaybackState | null) {
+      if (!started.current || !trackRef.current) {
+        return
+      }
+
+      if (!state || stateTrackId(state) !== trackRef.current) {
+        return
+      }
+
+      setPosition(state.position)
+      setDuration(state.duration || durationMs)
+      setStatus(state.paused ? 'paused' : 'playing')
     }
 
-    const timer = window.setInterval(() => {
-      void sharedPlayer?.getCurrentState().then((state) => {
-        if (!state) {
-          return
-        }
+    playbackListeners.add(applyState)
 
-        setPosition(state.position)
-        setDuration(state.duration || durationMs)
-        setStatus(state.paused ? 'paused' : 'playing')
-      })
-    }, 400)
+    const sync =
+      status === 'playing' || (status === 'paused' && started.current)
+        ? window.setInterval(() => {
+            void sharedPlayer?.getCurrentState().then(applyState)
+          }, 400)
+        : null
 
-    return () => window.clearInterval(timer)
+    return () => {
+      playbackListeners.delete(applyState)
+      if (sync !== null) {
+        window.clearInterval(sync)
+      }
+    }
   }, [durationMs, status])
 
   const toggle = useCallback(async () => {
-    if (
-      pendingRef.current ||
-      !trackRef.current ||
-      !sharedDeviceId ||
-      !sharedPlayer
-    ) {
+    if (pendingRef.current || !trackRef.current) {
       return
     }
 
-    const trackId = trackRef.current
+    const currentTrackId = trackRef.current
     pendingRef.current = true
     setPending(true)
 
     try {
-      await sharedPlayer.activateElement?.()
+      await sharedPlayer?.activateElement?.()
 
-      if (status === 'playing') {
+      if (status === 'playing' && sharedPlayer) {
         await sharedPlayer.pause()
-        if (trackRef.current === trackId) {
+        if (trackRef.current === currentTrackId) {
           setStatus('paused')
         }
         return
       }
 
-      if (status === 'paused' && started.current) {
-        await sharedPlayer.resume()
-        if (trackRef.current === trackId) {
-          setStatus('playing')
+      if (status === 'paused' && started.current && sharedPlayer) {
+        const current = (await sharedPlayer.getCurrentState()) ?? null
+
+        if (stateTrackId(current) === currentTrackId) {
+          await sharedPlayer.resume()
+          if (trackRef.current === currentTrackId) {
+            setStatus('playing')
+          }
+          return
         }
+      }
+
+      const deviceId = await ensurePlayer()
+      await sharedPlayer?.activateElement?.()
+      await SpotifyPlayerService.play(currentTrackId, deviceId)
+
+      if (trackRef.current !== currentTrackId) {
         return
       }
 
-      await SpotifyPlayerService.play(trackId, sharedDeviceId)
+      const playingState = await waitForPlayingTrack(currentTrackId)
 
-      if (trackRef.current !== trackId) {
+      if (trackRef.current !== currentTrackId) {
         return
       }
 
       started.current = true
-      setStatus('playing')
       setError(null)
+
+      if (playingState) {
+        setPosition(playingState.position)
+        setDuration(playingState.duration || durationMs)
+        setStatus('playing')
+        return
+      }
+
+      setPosition(0)
+      setStatus('playing')
     } catch {
-      if (trackRef.current === trackId) {
+      if (trackRef.current === currentTrackId) {
+        started.current = false
         setStatus('ready')
         setError('Spotify aún no ve este reproductor. Prueba de nuevo en un segundo.')
       }
     } finally {
-      if (trackRef.current === trackId) {
+      if (trackRef.current === currentTrackId) {
         pendingRef.current = false
         setPending(false)
       }
     }
-  }, [status])
+  }, [durationMs, status])
 
   const seek = useCallback(async (positionMs: number) => {
     if (!started.current || !sharedPlayer) {
@@ -309,12 +345,7 @@ export function useSpotifyPlayer(trackId: string | undefined, durationMs = 0) {
     error,
     toggle,
     seek,
-    busy: status === 'connecting' || pending,
-    loadingLabel:
-      status === 'connecting'
-        ? 'Conectando Spotify…'
-        : pending && status === 'ready'
-          ? 'Cargando canción…'
-          : null,
+    busy: pending,
+    loadingLabel: pending ? 'Cargando canción…' : null,
   }
 }
