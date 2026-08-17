@@ -35,7 +35,7 @@ export function FocusMode({
   const [error, setError] = useState<string | null>(null)
   const { marks } = useLyricMarks(track.id)
   const complete = isSyncComplete(lines)
-  const showEditor = editing || !complete
+  const showEditor = editing
   const duration = player.duration || track.durationMs || 0
   const smoothPosition = useSmoothPosition(
     player.position,
@@ -88,7 +88,7 @@ export function FocusMode({
       })
       setLines(response.data.lines)
       setSource('user')
-      setEditing(!response.data.complete)
+      setEditing(false)
     } catch {
       setError('No se pudo guardar la sincronización.')
     } finally {
@@ -115,11 +115,11 @@ export function FocusMode({
               imageUrl: track.imageUrl,
             }}
           />
-          {complete && source !== 'global' ? (
+          {!showEditor && source !== 'global' ? (
             <Button
               variant="icon"
-              aria-label={showEditor ? 'Ver letra' : 'Editar sincronización'}
-              onClick={() => setEditing((current) => !current)}
+              aria-label="Editar sincronización"
+              onClick={() => setEditing(true)}
             >
               <Pencil size={18} />
             </Button>

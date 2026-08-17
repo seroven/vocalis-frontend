@@ -10,7 +10,6 @@ import {
   nextLineIndex,
   singingIndex,
 } from '../interfaces/lyrics-sync.interface'
-import { keepLineCentered } from '../lib/keep-line-centered'
 import { LyricsTimeline } from './LyricsTimeline'
 
 type MarkFlash = 'space-start' | 'space-next' | 'enter-stop' | 'undo'
@@ -175,8 +174,15 @@ export function LyricsEditor({
       return
     }
 
-    keepLineCentered(scroller, line)
-  }, [hintIndex, singing, position])
+    const view = scroller.getBoundingClientRect()
+    const target = line.getBoundingClientRect()
+    scroller.scrollTo({
+      top:
+        scroller.scrollTop +
+        (target.top + target.height / 2 - (view.top + view.height / 2)),
+      behavior: 'smooth',
+    })
+  }, [hintIndex, singing])
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col gap-5">
@@ -225,9 +231,9 @@ export function LyricsEditor({
               key={`${line.text}-${index}`}
               ref={active ? activeLineRef : undefined}
               className={cx(
-                'mx-auto w-full text-center transition-all duration-200',
-                active && singing && 'font-display text-3xl text-accent md:text-4xl',
-                active && !singing && 'font-display text-3xl text-stage-fg md:text-4xl',
+                'mx-auto w-full text-center transition-[color,font-size,opacity,transform] duration-500 ease-out',
+                active && singing && 'font-display text-2xl text-accent md:text-3xl',
+                active && !singing && 'font-display text-2xl text-stage-fg md:text-3xl',
                 !active && done && 'text-lg text-stage-muted/70',
                 !active && !done && 'text-lg text-stage-muted',
               )}

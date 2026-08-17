@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Highlighter, ScanText } from 'lucide-react'
+import { Highlighter, Pencil, Plus, ScanText } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useLoaderGate } from '../../brand/BrandLoader'
@@ -7,6 +7,7 @@ import { DetailScreen, RevealBlock } from '../../shared/components/DetailScreen'
 import { Button } from '../../shared/components/Button'
 import { pageEase, pageMotion } from '../../shared/lib/page-motion'
 import { FocusMode } from '../lyrics/components/FocusMode'
+import { LyricsComposer } from '../lyrics/components/LyricsComposer'
 import { LyricsKaraoke } from '../lyrics/components/LyricsKaraoke'
 import { splitLyricLines } from '../lyrics/interfaces/lyrics-sync.interface'
 import { TrackPlayer } from '../player/components/TrackPlayer'
@@ -24,6 +25,7 @@ export function TrackPage() {
   const [error, setError] = useState(false)
   const [focus, setFocus] = useState(false)
   const [tagging, setTagging] = useState(false)
+  const [composing, setComposing] = useState(false)
   const ready = useLoaderGate(Boolean(data), id)
   const player = useSpotifyPlayer(data?.track.id, data?.track.durationMs ?? 0)
   const { tags, setTags } = useTags('track', id)
@@ -32,6 +34,7 @@ export function TrackPage() {
   useEffect(() => {
     setFocus(false)
     setTagging(false)
+    setComposing(false)
   }, [id])
 
   useEffect(() => {
@@ -159,8 +162,20 @@ export function TrackPage() {
                       </motion.div>
                     ) : null}
                   </AnimatePresence>
-                  {data.lyrics ? (
+                  {data.lyrics && !composing ? (
                     <motion.div layout transition={{ duration: 0.32, ease: pageEase }}>
+                    {data.lyricsSource === 'user' ? (
+                      <div className="mb-4 flex justify-center">
+                        <Button
+                          variant="ghost"
+                          className="w-auto"
+                          onClick={() => setComposing(true)}
+                        >
+                          <Pencil size={15} />
+                          Editar letra
+                        </Button>
+                      </div>
+                    ) : null}
                     <LyricsKaraoke
                       lines={splitLyricLines(data.lyrics)}
                       follow={false}
@@ -192,10 +207,32 @@ export function TrackPage() {
                       }
                     />
                     </motion.div>
+                  ) : composing ? (
+                    <LyricsComposer
+                      trackId={data.track.id}
+                      initial={data.lyrics ?? ''}
+                      onSaved={(lyrics) => {
+                        setData((current) =>
+                          current
+                            ? { ...current, lyrics, lyricsSource: 'user' }
+                            : current,
+                        )
+                        setComposing(false)
+                      }}
+                      onCancel={data.lyrics ? () => setComposing(false) : undefined}
+                    />
                   ) : (
-                    <p className="mt-10 text-stage-muted">
-                      No encontramos la letra de esta canción.
-                    </p>
+                    <div className="mt-10">
+                      <p className="text-stage-muted">
+                        No encontramos la letra de esta canción.
+                      </p>
+                      <div className="mt-4 flex justify-center">
+                        <Button onClick={() => setComposing(true)}>
+                          <Plus size={18} />
+                          Añadir letra
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </RevealBlock>
               </>

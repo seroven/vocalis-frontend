@@ -364,6 +364,29 @@ body {
   height: 2.25rem;
 }
 
+.lyric-field {
+  width: 100%;
+  min-height: 16rem;
+  resize: vertical;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--app-line);
+  color: var(--app-stage-fg);
+  padding: 0.75rem 0.2rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.lyric-field::placeholder {
+  color: var(--app-stage-muted);
+}
+
+.lyric-field:focus {
+  outline: none;
+  border-bottom-color: var(--app-accent);
+}
+
 
 .icon-btn {
   background: var(--app-accent-soft);
