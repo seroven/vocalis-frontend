@@ -54,4 +54,32 @@ export function apiDelete<T>(path: string) {
   })
 }
 
+export async function apiUpload<T>(path: string, body: FormData): Promise<ApiResponse<T>> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    body,
+  })
+
+  const payload = (await response.json()) as ApiResponse<T>
+
+  if (!response.ok) {
+    throw new ApiError(response.status, payload.detail || `Error ${response.status}`)
+  }
+
+  return payload
+}
+
+export async function apiBlob(path: string) {
+  const response = await fetch(`${API_URL}${path}`, {
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Error ${response.status}`)
+  }
+
+  return response.blob()
+}
+
 export { ApiError }

@@ -12,6 +12,7 @@ import { isSyncComplete, splitLyricLines } from '../interfaces/lyrics-sync.inter
 import { LyricsSyncService } from '../services/LyricsSyncService'
 import { useSmoothPosition } from '../hooks/useSmoothPosition'
 import { useLyricMarks } from '../../tags/hooks/useTags'
+import { RecordingMenu } from '../../recordings/components/RecordingMenu'
 import { LyricsEditor } from './LyricsEditor'
 import { LyricsKaraoke } from './LyricsKaraoke'
 
@@ -106,6 +107,14 @@ export function FocusMode({
           <h2 className="truncate font-display text-xl">{track.title}</h2>
         </div>
         <div className="flex items-center gap-1.5">
+          <RecordingMenu
+            track={{
+              id: track.id,
+              title: track.title,
+              artistName: track.artistName,
+              imageUrl: track.imageUrl,
+            }}
+          />
           {complete && source !== 'global' ? (
             <Button
               variant="icon"
@@ -148,7 +157,12 @@ export function FocusMode({
                   onSave={() => void handleSave()}
                 />
               ) : (
-                <LyricsKaraoke lines={lines} position={smoothPosition} marks={marks} />
+                <LyricsKaraoke
+                  lines={lines}
+                  position={smoothPosition}
+                  marks={marks}
+                  onSeek={player.seek}
+                />
               )}
             </motion.div>
           )}

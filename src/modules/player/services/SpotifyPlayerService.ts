@@ -17,7 +17,11 @@ export class SpotifyPlayerService {
     return cached.token
   }
 
-  static play(trackId: string, deviceId: string) {
-    return apiPut<PlayTrackData>('/spotify/player/play', { trackId, deviceId })
+  static play(trackId: string, deviceId: string, positionMs = 0) {
+    return apiPut<PlayTrackData>('/spotify/player/play', {
+      trackId,
+      deviceId,
+      positionMs,
+    })
   }
 }

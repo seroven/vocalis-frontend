@@ -348,6 +348,22 @@ body {
   background: hsl(var(--hue) 16% 16%);
 }
 
+.recording-audio-slot {
+  height: 2.25rem;
+}
+
+.recording-audio-slot-busy {
+  display: block;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-stage-fg) 8%, transparent);
+}
+
+.recording-audio {
+  accent-color: var(--app-accent);
+  height: 2.25rem;
+}
+
 
 .icon-btn {
   background: var(--app-accent-soft);

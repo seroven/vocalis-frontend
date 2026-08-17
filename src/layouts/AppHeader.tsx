@@ -4,6 +4,7 @@ import { VocalisLogo } from '../brand/VocalisLogo'
 import { useAuth } from '../modules/auth/AuthContext'
 import { AuthService } from '../modules/auth/services/AuthService'
 import { Button } from '../shared/components/Button'
+import { MicControls } from './MicControls'
 import { ThemeControls } from './ThemeControls'
 import { VolumeControls } from './VolumeControls'
 
@@ -24,6 +25,7 @@ export function AppHeader() {
       </Link>
 
       <div className="flex items-center gap-1.5">
+        {user ? <MicControls /> : null}
         <VolumeControls />
         <ThemeControls />
         {user && (

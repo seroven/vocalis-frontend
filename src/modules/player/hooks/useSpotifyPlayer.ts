@@ -330,13 +330,53 @@ export function useSpotifyPlayer(trackId: string | undefined, durationMs = 0) {
   }, [durationMs, status])
 
   const seek = useCallback(async (positionMs: number) => {
-    if (!started.current || !sharedPlayer) {
+    const currentTrackId = trackRef.current
+    if (!currentTrackId || pendingRef.current) {
       return
     }
 
-    await sharedPlayer.seek(positionMs)
-    setPosition(positionMs)
-  }, [])
+    const at = Math.max(0, Math.round(positionMs))
+
+    if (started.current && sharedPlayer) {
+      await sharedPlayer.seek(at)
+      setPosition(at)
+      return
+    }
+
+    pendingRef.current = true
+    setPending(true)
+
+    try {
+      await sharedPlayer?.activateElement?.()
+      const deviceId = await ensurePlayer()
+      await sharedPlayer?.activateElement?.()
+      await SpotifyPlayerService.play(currentTrackId, deviceId, at)
+
+      if (trackRef.current !== currentTrackId) {
+        return
+      }
+
+      const playingState = await waitForPlayingTrack(currentTrackId)
+      if (trackRef.current !== currentTrackId) {
+        return
+      }
+
+      started.current = true
+      setError(null)
+      setPosition(playingState?.position ?? at)
+      setDuration(playingState?.duration || durationMs)
+      setStatus('playing')
+    } catch {
+      if (trackRef.current === currentTrackId) {
+        setError('No se pudo saltar a esa parte. Prueba a reproducir primero.')
+      }
+    } finally {
+      if (trackRef.current === currentTrackId) {
+        pendingRef.current = false
+        setPending(false)
+      }
+    }
+  }, [durationMs])
 
   return {
     status,

@@ -13,6 +13,7 @@ import { TrackPlayer } from '../player/components/TrackPlayer'
 import { useSpotifyPlayer } from '../player/hooks/useSpotifyPlayer'
 import type { TrackPageData } from '../home/interfaces/search.interface'
 import { SpotifyService } from '../home/services/SpotifyService'
+import { RecordingMenu } from '../recordings/components/RecordingMenu'
 import { TagsMenu } from '../tags/components/TagsPanel'
 import { useLyricMarks, useTags } from '../tags/hooks/useTags'
 import { TagsService } from '../tags/services/TagsService'
@@ -87,6 +88,16 @@ export function TrackPage() {
             pinToolbar
             actions={
               <div className="flex items-center gap-1.5">
+                {data ? (
+                  <RecordingMenu
+                    track={{
+                      id: data.track.id,
+                      title: data.track.title,
+                      artistName: data.track.artistName,
+                      imageUrl: data.track.imageUrl,
+                    }}
+                  />
+                ) : null}
                 <TagsMenu
                   tags={tags}
                   target={
