@@ -13,7 +13,7 @@ type ButtonBaseProps = {
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    'cta pressable btn-primary inline-flex items-center justify-center rounded-full bg-accent px-6 py-2.5 font-semibold disabled:cursor-wait disabled:opacity-70 disabled:hover:scale-100',
+    'cta pressable btn-primary inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-2.5 font-semibold disabled:cursor-wait disabled:opacity-70 disabled:hover:scale-100',
   icon: 'icon-btn grid h-10 w-10 place-items-center rounded-full',
   ghost:
     'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-stage-muted hover:text-stage-fg',

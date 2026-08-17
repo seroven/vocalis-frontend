@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { Save } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { cx } from '../../../shared/lib/cx'
 import { Button } from '../../../shared/components/Button'
@@ -224,7 +225,7 @@ export function LyricsEditor({
               key={`${line.text}-${index}`}
               ref={active ? activeLineRef : undefined}
               className={cx(
-                'mx-auto max-w-3xl text-center transition-all duration-200',
+                'mx-auto w-full text-center transition-all duration-200',
                 active && singing && 'font-display text-3xl text-accent md:text-4xl',
                 active && !singing && 'font-display text-3xl text-stage-fg md:text-4xl',
                 !active && done && 'text-lg text-stage-muted/70',
@@ -256,6 +257,7 @@ export function LyricsEditor({
           </span>
         </div>
         <Button onClick={() => void onSave()} disabled={saving}>
+          <Save size={18} />
           {saving ? 'Guardando…' : complete ? 'Guardar sincronización' : 'Guardar avance'}
         </Button>
       </div>

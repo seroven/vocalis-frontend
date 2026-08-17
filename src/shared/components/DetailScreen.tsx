@@ -32,12 +32,21 @@ export function RevealBlock({
   return <motion.div variants={item} className={className}>{children}</motion.div>
 }
 
+function StickyToolbar({ children }: { children: ReactNode }) {
+  return (
+    <div className="detail-toolbar-sticky mb-6 flex items-center justify-between gap-3">
+      {children}
+    </div>
+  )
+}
+
 export function DetailScreen({
   ready,
   error,
   errorMessage,
   className,
   centered = false,
+  pinToolbar = false,
   actions,
   children,
 }: {
@@ -46,6 +55,7 @@ export function DetailScreen({
   errorMessage: string
   className?: string
   centered?: boolean
+  pinToolbar?: boolean
   actions?: ReactNode
   children: ReactNode
 }) {
@@ -53,10 +63,17 @@ export function DetailScreen({
 
   return (
     <section className={cx('mx-auto flex min-h-full w-full flex-1 flex-col', className)}>
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <BackButton />
-        {actions}
-      </div>
+      {pinToolbar ? (
+        <StickyToolbar>
+          <BackButton />
+          {actions}
+        </StickyToolbar>
+      ) : (
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <BackButton />
+          {actions}
+        </div>
+      )}
 
       {error ? (
         <p className="text-center text-stage-muted">{errorMessage}</p>

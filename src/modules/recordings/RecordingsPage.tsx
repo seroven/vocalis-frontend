@@ -2,7 +2,7 @@ import { BackButton } from '../../shared/components/BackButton'
 
 export function RecordingsPage() {
   return (
-    <section className="mx-auto w-full max-w-2xl text-center">
+    <section className="w-full text-center">
       <div className="text-left">
         <BackButton />
       </div>

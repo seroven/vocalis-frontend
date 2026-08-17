@@ -6,12 +6,15 @@ import { CatalogGrid } from '../home/components/CatalogGrid'
 import { TrackList } from '../home/components/TrackList'
 import type { ArtistDetail } from '../home/interfaces/search.interface'
 import { SpotifyService } from '../home/services/SpotifyService'
+import { TagsMenu } from '../tags/components/TagsPanel'
+import { useTags } from '../tags/hooks/useTags'
 
 export function ArtistPage() {
   const { id } = useParams()
   const [artist, setArtist] = useState<ArtistDetail | null>(null)
   const [error, setError] = useState(false)
   const ready = useLoaderGate(Boolean(artist), id)
+  const { tags, setTags } = useTags('artist', id)
 
   useEffect(() => {
     if (!id) {
@@ -46,7 +49,18 @@ export function ArtistPage() {
       ready={ready && Boolean(artist)}
       error={error}
       errorMessage="No se pudo abrir este artista."
-      className="max-w-[53rem]"
+      className="w-full"
+      actions={
+        <TagsMenu
+          tags={tags}
+          target={
+            artist
+              ? { id: artist.id, name: artist.title, scope: 'artist' }
+              : { id: id ?? '', name: 'Artista', scope: 'artist' }
+          }
+          onCreated={(tag) => setTags((current) => [tag, ...current])}
+        />
+      }
     >
       {artist ? (
         <>

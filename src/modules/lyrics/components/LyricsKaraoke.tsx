@@ -1,6 +1,8 @@
 import { Music2 } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
 import { cx } from '../../../shared/lib/cx'
+import { TaggedLyricText } from '../../tags/components/TaggedLyricText'
+import type { LyricTagMark, Tag, TagTarget } from '../../tags/interfaces/tag.interface'
 import type { LyricLine } from '../interfaces/lyrics-sync.interface'
 import {
   activeLyricCue,
@@ -13,10 +15,24 @@ export function LyricsKaraoke({
   lines,
   position,
   follow = true,
+  marks = [],
+  tags = [],
+  editing = false,
+  onApplyTag,
+  onRemoveTag,
+  onTagCreated,
+  target,
 }: {
   lines: LyricLine[]
   position?: number
   follow?: boolean
+  marks?: LyricTagMark[]
+  tags?: Tag[]
+  editing?: boolean
+  onApplyTag?: (lineIndex: number, start: number, end: number, excerpt: string, tagId: number) => void
+  onRemoveTag?: (markId: number) => void
+  onTagCreated?: (tag: Tag) => void
+  target?: TagTarget
 }) {
   const at = position ?? -1
   const active = follow ? activeLyricCue(lines, at) : null
@@ -41,7 +57,7 @@ export function LyricsKaraoke({
     >
       <div
         className={cx(
-          'mx-auto flex w-full max-w-3xl flex-col items-center gap-5',
+          'mx-auto flex w-full flex-col items-center gap-5',
           follow && 'py-[38vh]',
         )}
       >
@@ -85,7 +101,21 @@ export function LyricsKaraoke({
                     : 'text-xl text-stage-muted',
               )}
             >
-              {line.text}
+              <TaggedLyricText
+                text={line.text}
+                marks={marks.filter((mark) => mark.lineIndex === cue.index)}
+                tags={tags}
+                editing={editing}
+                onApply={
+                  onApplyTag
+                    ? (start, end, excerpt, tagId) =>
+                        onApplyTag(cue.index, start, end, excerpt, tagId)
+                    : undefined
+                }
+                onRemove={onRemoveTag}
+                onTagCreated={onTagCreated}
+                target={target}
+              />
             </p>
           )
         })}

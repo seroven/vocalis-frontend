@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { Mic2, Tags } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ButtonLink } from '../../shared/components/Button'
@@ -264,11 +265,18 @@ export function HomePage() {
             )}
           </h1>
 
-          <ButtonLink to="/grabaciones" className="mt-8">
-            Mis grabaciones
-          </ButtonLink>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <ButtonLink to="/grabaciones">
+              <Mic2 size={18} />
+              Mis grabaciones
+            </ButtonLink>
+            <ButtonLink to="/etiquetas">
+              <Tags size={18} />
+              Mis etiquetas
+            </ButtonLink>
+          </div>
 
-          <div className="mt-10 flex w-full max-w-lg items-center gap-2">
+          <div className="mt-10 flex w-full items-center gap-2">
             <TextField
               label={placeholder}
               type="search"
@@ -315,7 +323,7 @@ export function HomePage() {
         {visibleItems.length > 0 ? (
           <motion.div
             key={`${resultQuery}:${resultFilter}:${resultFavorites ? 'fav' : 'all'}:${resultFocus ? 'focus' : 'all'}`}
-            className="mx-auto w-full max-w-[53rem]"
+            className="w-full"
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{
               opacity: busy ? 0.4 : 1,

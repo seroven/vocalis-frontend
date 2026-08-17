@@ -11,6 +11,7 @@ import type { LyricLine } from '../interfaces/lyrics-sync.interface'
 import { isSyncComplete, splitLyricLines } from '../interfaces/lyrics-sync.interface'
 import { LyricsSyncService } from '../services/LyricsSyncService'
 import { useSmoothPosition } from '../hooks/useSmoothPosition'
+import { useLyricMarks } from '../../tags/hooks/useTags'
 import { LyricsEditor } from './LyricsEditor'
 import { LyricsKaraoke } from './LyricsKaraoke'
 
@@ -31,6 +32,7 @@ export function FocusMode({
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { marks } = useLyricMarks(track.id)
   const complete = isSyncComplete(lines)
   const showEditor = editing || !complete
   const duration = player.duration || track.durationMs || 0
@@ -96,9 +98,9 @@ export function FocusMode({
   return createPortal(
     <motion.div
       {...pageMotion}
-      className="absolute inset-0 z-20 flex flex-col px-5 py-5 text-stage-fg md:px-8 md:py-6"
+      className="absolute inset-0 z-20 flex flex-col py-5 text-stage-fg md:py-6"
     >
-      <div className="mx-auto flex w-full max-w-5xl shrink-0 items-center justify-between gap-3 py-2">
+      <div className="app-width flex shrink-0 items-center justify-between gap-3 py-2">
         <div className="min-w-0">
           <p className="text-xs tracking-[0.18em] text-accent uppercase">Focus</p>
           <h2 className="truncate font-display text-xl">{track.title}</h2>
@@ -119,7 +121,7 @@ export function FocusMode({
         </div>
       </div>
 
-      <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col pt-4">
+      <div className="app-width flex min-h-0 flex-1 flex-col pt-4">
         <AnimatePresence mode="wait">
           {loading ? (
             <motion.p
@@ -146,7 +148,7 @@ export function FocusMode({
                   onSave={() => void handleSave()}
                 />
               ) : (
-                <LyricsKaraoke lines={lines} position={smoothPosition} />
+                <LyricsKaraoke lines={lines} position={smoothPosition} marks={marks} />
               )}
             </motion.div>
           )}
@@ -154,10 +156,10 @@ export function FocusMode({
       </div>
 
       {error ? (
-        <p className="mx-auto mt-3 w-full max-w-5xl shrink-0 text-sm text-rose-400">{error}</p>
+        <p className="app-width mt-3 shrink-0 text-sm text-rose-400">{error}</p>
       ) : null}
 
-      <div className="mx-auto mt-4 w-full max-w-5xl shrink-0">
+      <div className="app-width mt-4 shrink-0">
         <TrackPlayer track={track} player={player} compact />
       </div>
     </motion.div>,

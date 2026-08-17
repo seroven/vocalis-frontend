@@ -5,12 +5,15 @@ import { DetailScreen, RevealBlock } from '../../shared/components/DetailScreen'
 import { TrackList } from '../home/components/TrackList'
 import type { AlbumDetail } from '../home/interfaces/search.interface'
 import { SpotifyService } from '../home/services/SpotifyService'
+import { TagsMenu } from '../tags/components/TagsPanel'
+import { useTags } from '../tags/hooks/useTags'
 
 export function AlbumPage() {
   const { id } = useParams()
   const [album, setAlbum] = useState<AlbumDetail | null>(null)
   const [error, setError] = useState(false)
   const ready = useLoaderGate(Boolean(album), id)
+  const { tags, setTags } = useTags('album', id)
 
   useEffect(() => {
     if (!id) {
@@ -43,7 +46,18 @@ export function AlbumPage() {
       ready={ready && Boolean(album)}
       error={error}
       errorMessage="No se pudo abrir este álbum."
-      className="max-w-2xl"
+      className="w-full"
+      actions={
+        <TagsMenu
+          tags={tags}
+          target={
+            album
+              ? { id: album.id, name: album.title, scope: 'album' }
+              : { id: id ?? '', name: 'Álbum', scope: 'album' }
+          }
+          onCreated={(tag) => setTags((current) => [tag, ...current])}
+        />
+      }
     >
       {album ? (
         <>

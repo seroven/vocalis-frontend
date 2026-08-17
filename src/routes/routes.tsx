@@ -5,6 +5,7 @@ import { authRoutes } from '../modules/auth/routes'
 import { catalogRoutes } from '../modules/catalog/routes'
 import { homeRoutes } from '../modules/home/routes'
 import { recordingsRoutes } from '../modules/recordings/routes'
+import { tagsRoutes } from '../modules/tags/routes'
 
 export const routes: RouteObject[] = [
   {
@@ -14,7 +15,7 @@ export const routes: RouteObject[] = [
       ...authRoutes,
       {
         element: <ProtectedRoute />,
-        children: [...homeRoutes, ...recordingsRoutes, ...catalogRoutes],
+        children: [...homeRoutes, ...recordingsRoutes, ...tagsRoutes, ...catalogRoutes],
       },
     ],
   },
